@@ -1,0 +1,155 @@
+---
+title: "HW 4"
+output: html_document
+---
+Samantha Ho 
+HW 4
+
+```{r}
+library(car)
+library(olsrr)
+library(wooldridge)
+library(dplyr)
+library(ggplot2)
+```
+
+# Question 3
+
+## Part 1
+H0: beta2 = beta3
+H1: beta2 != beta 3
+
+## Part 2
+
+```{r}
+df<- wage2
+```
+### Way 1
+```{r}
+df$lwage <-log(df$wage)
+fit <- lm(formula = lwage~educ+exper+tenure, data = df)
+fit$coefficients
+coef(summary(fit))
+```
+
+```{r}
+# find se 
+se_b2_b3<- sqrt(vcov(fit)[3,3]+vcov(fit)[4,4]-2*vcov(fit)[4,3])
+se_b2_b3
+
+# find t
+t<-(coef(summary(fit))[3,1]-coef(summary(fit))[4,1])/se_b2_b3
+t
+
+# obtain p-value
+2*(1-pt(t, df=931))
+```
+T statistic is 0.4118707
+
+p-value is 0.680529
+
+```{r}
+# finding confidence intervals 
+b2_b3_lb <- (coef(summary(fit))[3,1]-coef(summary(fit))[4,1])-(2*se_b2_b3)
+b2_b3_lb 
+b2_b3_ub <- (coef(summary(fit))[3,1]-coef(summary(fit))[4,1])+(2*se_b2_b3)
+b2_b3_ub
+
+```
+
+CI: [-0.007533164, 0.01144051]
+Conclusion: cannot reject null hypothesis since 0 is within the CI.
+
+### Way 2
+new model: $lwage = b0 + b1 edu + \theta (exp)  + b3(exp+tenure)$
+H0: $\theta$ = 0
+H1: $\theta$ != 0
+
+```{r}
+df$new_reg <-df$exper+df$tenure
+fit2 <- lm(formula = lwage~educ+exper+new_reg, data = df)
+coef(summary(fit2))
+```
+T statistic is 0.4118707
+p-value is 0.680529
+
+```{r}
+# critical value
+qt(0.975, df=931)
+```
+
+
+```{r}
+#find CI
+b2_lb <- coef(summary(fit2))[3,1]-qt(0.975,df=931) * coef(summary(fit2))[3,2]
+b2_ub <- coef(summary(fit2))[3,1]+qt(0.975,df=931) * coef(summary(fit2))[3,2]
+b2_lb
+b2_ub
+```
+CI: [-0.007533164, 0.01144051]
+Conclusion: cannot reject null hypothesis 
+
+# Question 4
+
+## i
+```{r}
+df2 <-k401ksubs
+df3<-filter(df2, fsize == 1)
+```
+2,017 single-person households
+
+## ii
+```{r}
+fit3 <- lm(formula = nettfa~inc+age, data = df3)
+summary(fit3)
+
+resid <- resid(fit3) 
+lm1 <- lm(df3$nettfa ~ resid + 1) 
+summary(lm1)
+```
+
+model: $nettfa = -43.03981 + 0.79932 inc + 0.84266  age  + 13.594981$
+
+Holding age constant, a 1 unit increase in annual family income results in a $799.32 increase in net financial wealth. Holding annual family income constant, a 1 unit increase in age of respondent results in a $842.66 increase in net financial wealth. There are no surprises in the slope coefficients. It makes sense that there would be an increase in net wealth as age and family income increases. 
+
+## iii
+The intercept means that when age and income are both 0, net financial wealth is -$43,040. It makes sense that the person would be in debt if there is $0 family income. It does not make sense for the age of the respondent to be 0, since they would not be alive to take the survey.
+
+## iv
+```{r}
+#based on p-value
+se_b2 <-sqrt(vcov(fit3)[3,3])
+t2<-(coef(summary(fit3))[3,1]-1)/se_b2
+t2
+pt(t2, df = 2014)
+```
+p-value is 0.04371514, so we cannot reject at 1% significance since it is greater than 0.01. 
+
+```{r}
+#based on critical value
+qt(0.01, 2014) 
+```
+T statistic (-1.709944) is greater than the critical value (-2.328201), so we cannot reject the H0.
+
+## v
+```{r}
+fit4 <- lm(formula = nettfa~inc, data = df3)
+summary(fit4)
+```
+```{r}
+cor(df3$age, df3$inc)
+```
+
+The estimated coefficient on inc is 0.8207, which is  slightly larger compared to the estimate in part ii: 0.79932. It is slightly larger because it includes the effect of the missing variable age, which also has a positive relationship with net income. However, the correlation between age and income is negligible (0.039), so the difference in estimated coefficient is not large.
+
+
+
+
+
+
+
+
+
+
+
+
